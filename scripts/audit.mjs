@@ -16,7 +16,15 @@ for (const path of pages) {
   for (const tag of ["<title>", 'name="description"', 'rel="canonical"', 'property="og:title"', 'property="og:description"', 'property="og:url"']) {
     if (!text.includes(tag)) fail(`${path} missing ${tag}`);
   }
-  if (!text.includes("PaycoreOS, a DBA of Telecom Elite, Inc., 1809 E Broadway St, Oviedo, FL 32765, (407) 270-2502, info@paycoreos.com.")) {
+  const footer = text.match(/<footer class="site-footer">[\s\S]*?<\/footer>/)?.[0] || "";
+  if (!footer) fail(`${path} missing footer`);
+  if (path === "/") {
+    if (footer.includes("1809 E Broadway") || footer.includes("(407) 270-2502") || footer.includes("info@paycoreos.com")) {
+      fail("homepage footer still shows address, phone, or email");
+    }
+    if (!footer.includes('href="/contact"')) fail("homepage footer missing contact link");
+    if (footer.includes("sf-legal") || footer.includes("<address>")) fail("homepage footer still has the legal block");
+  } else if (!text.includes("PaycoreOS, a DBA of Telecom Elite, Inc., 1809 E Broadway St, Oviedo, FL 32765, (407) 270-2502, info@paycoreos.com.")) {
     fail(`${path} missing footer identity`);
   }
   if (banned.test(text)) fail(`${path} names a supplier`);

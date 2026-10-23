@@ -76,7 +76,7 @@ ${publicNav(opts.current ?? opts.seo.path)}
 <main id="content">
 ${opts.main}
 </main>
-${publicFooter()}
+${publicFooter(opts.seo.path)}
 <script src="/track.js" defer></script>
 </body>
 </html>`;
@@ -97,18 +97,22 @@ function publicNav(current: string): string {
 </nav>`;
 }
 
-function publicFooter(): string {
+function publicFooter(path: string): string {
   const links = FOOTER_LINKS.map(([href, label]) => `<li><a href="${href}">${label}</a></li>`).join("");
-  return `<footer class="site-footer">
-  <div class="sf-logo">Paycore<span class="g">OS</span></div>
-  <p class="sf-tag">Powerful Operating Support. Powerful Growth.</p>
-  <p class="sf-legal">${FOOTER_LINE}</p>
+  const identity =
+    path === "/"
+      ? ""
+      : `<p class="sf-legal">${FOOTER_LINE}</p>
   <address>
     <span>PaycoreOS, a DBA of Telecom Elite, Inc.</span>
     <span>${ADDRESS}</span>
     <a href="tel:${PHONE_TEL}">${PHONE_DISPLAY}</a>
     <a href="mailto:${EMAIL}">${EMAIL}</a>
-  </address>
+  </address>`;
+  return `<footer class="site-footer">
+  <div class="sf-logo">Paycore<span class="g">OS</span></div>
+  <p class="sf-tag">Powerful Operating Support. Powerful Growth.</p>
+  ${identity}
   <ul class="sf-links">${links}</ul>
   <p class="sf-copy">© 2026 PaycoreOS / Telecom Elite, Inc.</p>
 </footer>`;
