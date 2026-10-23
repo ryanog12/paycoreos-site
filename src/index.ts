@@ -1,5 +1,5 @@
 import { Hono, type Context, type Next } from "hono";
-import { destroySession, clearSessionCookie, loadUser } from "./auth";
+import { destroySession, clearSessionCookie, ensureAdmin, loadUser } from "./auth";
 import { syncAttrHeader } from "./attr";
 import * as admin from "./admin";
 import { renderApply, renderFee, submitApply } from "./apply";
@@ -32,6 +32,7 @@ app.use("*", async (c, next) => {
     }
   }
   await boot(c.env);
+  await ensureAdmin(c.env);
   c.set("user", await loadUser(c));
   await next();
   const attr = syncAttrHeader(c);
