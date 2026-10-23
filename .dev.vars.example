@@ -1,0 +1,4 @@
+# Copy to .dev.vars for local wrangler dev. Do not commit .dev.vars.
+# Production uses `wrangler secret put` for these names. Never commit the values.
+ADMIN_EMAIL=admin@paycoreos.com
+ADMIN_PASSWORD=replace-with-at-least-10-characters

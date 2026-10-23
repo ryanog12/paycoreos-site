@@ -1,0 +1,25 @@
+name = "paycoreos"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+# Static files (logo, CSS, event script). HTML is rendered by the Worker.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "paycoreos"
+database_id = "f7b67458-7301-4f6b-a12f-25ef3094c653"
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "paycoreos-files"
+
+# Non-secret config. Admin login comes from Worker secrets ADMIN_EMAIL and
+# ADMIN_PASSWORD. Do not put those values in this file.
+[vars]
+FEE_PAYMENTS_ENABLED = "false"
+SITE_ORIGIN = "https://paycoreos.com"

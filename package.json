@@ -1,0 +1,18 @@
+{
+  "name": "paycoreos",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "check": "tsc --noEmit",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261019.1",
+    "typescript": "^5.9.2",
+    "wrangler": "^4.42.0"
+  },
+  "dependencies": {
+    "hono": "^4.9.8"
+  }
+}
