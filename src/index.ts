@@ -74,7 +74,7 @@ app.get("/robots.txt", (c) => c.text(robotsTxt()));
 app.get("/sitemap.xml", (c) => c.body(sitemapXml(), 200, { "Content-Type": "application/xml; charset=utf-8" }));
 app.get("/llms.txt", (c) => c.text(llmsTxt()));
 
-const MARKETING = ["/", "/call-centers", "/ecommerce", "/retail", "/restaurants", "/switching", "/startups", "/dispute-defense", "/services", "/about", "/contact", "/application-fee"];
+const MARKETING = ["/", "/call-centers", "/ecommerce", "/retail", "/restaurants", "/switching", "/startups", "/declined", "/dispute-defense", "/services", "/about", "/contact", "/application-fee"];
 
 for (const path of MARKETING) {
   app.get(path, (c) => {

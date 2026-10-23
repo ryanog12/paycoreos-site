@@ -95,6 +95,8 @@ CREATE TABLE IF NOT EXISTS applications (
   landing_path TEXT,
   first_vertical TEXT,
   first_buyer_type TEXT,
+  declined_by_bank INTEGER NOT NULL DEFAULT 0,
+  declined_bank TEXT NOT NULL DEFAULT '',
   fee_status TEXT NOT NULL DEFAULT 'not_collected',
   fee_amount_cents INTEGER NOT NULL DEFAULT 3900,
   merchant_user_id TEXT,

@@ -49,7 +49,47 @@ const CALL_DOCS: Condition = {
   any: [{ categories: ["call-centers"] }, { categories: ["dispute-defense"], all: [{ key: "also_call_center", equals: "yes" }] }],
 };
 
+const DECLINED_YES: Condition = { all: [{ key: "declined_by_bank", equals: "yes" }] };
+
 export const SEED_FIELDS: SeedField[] = [
+  {
+    id: "fld_declined",
+    key: "declined_by_bank",
+    label: "Were you declined by a bank?",
+    help: "If a bank declined a merchant account, say so. PaycoreOS still submits the application. That is not a promise of approval. We do not tell you which company receives the file.",
+    type: "radio",
+    section: "decline",
+    categories: ALL,
+    required: true,
+    sort: 5,
+    options: [
+      { value: "yes", label: "Yes" },
+      { value: "no", label: "No" },
+    ],
+  },
+  {
+    id: "fld_declined_bank",
+    key: "declined_bank",
+    label: "Which bank?",
+    help: "Name the bank that sent the decline. This is not a list of companies PaycoreOS uses.",
+    type: "text",
+    section: "decline",
+    categories: ALL,
+    required: true,
+    sort: 6,
+    condition: DECLINED_YES,
+  },
+  {
+    id: "fld_decline_notice",
+    key: "decline_notice",
+    label: "Decline notice",
+    help: "Optional. Upload the letter or email if you have it. The form does not require this file.",
+    type: "file",
+    section: "decline",
+    categories: ALL,
+    sort: 7,
+    condition: DECLINED_YES,
+  },
   { id: "fld_legal", key: "legal_business_name", label: "Legal business name", help: "", type: "text", section: "identity", categories: ALL, required: true, sort: 10 },
   { id: "fld_dba", key: "dba", label: "DBA, if different", help: "", type: "text", section: "identity", categories: FOUR, sort: 20 },
   { id: "fld_contact", key: "contact_name", label: "Contact name", help: "", type: "text", section: "identity", categories: ALL, required: true, sort: 30 },
@@ -528,6 +568,7 @@ export function defaultAnswers(category: string): Answers {
 }
 
 export const SECTION_LABELS: Record<string, string> = {
+  decline: "Earlier bank decision",
   identity: "Business identity",
   payments: "How you take payments",
   gateway: "Gateway",

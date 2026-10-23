@@ -95,6 +95,8 @@ CREATE TABLE IF NOT EXISTS applications (
   landing_path TEXT,
   first_vertical TEXT,
   first_buyer_type TEXT,
+  declined_by_bank INTEGER NOT NULL DEFAULT 0,
+  declined_bank TEXT NOT NULL DEFAULT '',
   fee_status TEXT NOT NULL DEFAULT 'not_collected',
   fee_amount_cents INTEGER NOT NULL DEFAULT 3900,
   merchant_user_id TEXT,
@@ -194,6 +196,7 @@ export function boot(env: Env): Promise<void> {
 async function migrateAndSeed(env: Env): Promise<void> {
   const statements = SCHEMA.split(";").map((sql) => sql.trim()).filter(Boolean);
   for (const sql of statements) await env.DB.prepare(sql).run();
+  await ensureApplicationColumns(env);
   const seeded = await env.DB.prepare("SELECT value FROM app_meta WHERE key = 'seed'").first<{ value: string }>();
   if (!seeded) {
     const stamp = nowIso();
@@ -248,5 +251,49 @@ async function migrateAndSeed(env: Env): Promise<void> {
     statements.push(env.DB.prepare("INSERT INTO app_meta (key, value) VALUES ('seed', '1')"));
     await env.DB.batch(statements);
   }
+  await ensureDeclinedFields(env);
   await ensureAdmin(env);
+}
+
+async function ensureApplicationColumns(env: Env): Promise<void> {
+  const info = await env.DB.prepare("PRAGMA table_info(applications)").all<{ name: string }>();
+  const names = new Set((info.results || []).map((row) => row.name));
+  if (!names.has("declined_by_bank")) {
+    await env.DB.prepare("ALTER TABLE applications ADD COLUMN declined_by_bank INTEGER NOT NULL DEFAULT 0").run();
+  }
+  if (!names.has("declined_bank")) {
+    await env.DB.prepare("ALTER TABLE applications ADD COLUMN declined_bank TEXT NOT NULL DEFAULT ''").run();
+  }
+}
+
+async function ensureDeclinedFields(env: Env): Promise<void> {
+  const stamp = nowIso();
+  const keys = new Set(["declined_by_bank", "declined_bank", "decline_notice"]);
+  for (const row of SEED_FIELDS) {
+    if (!keys.has(row.key)) continue;
+    await env.DB.prepare(
+      `INSERT OR IGNORE INTO field_definitions
+       (id, key, label, help_text, field_type, section, categories, buyer_types, required, multiple, options_json, condition_json, sort_order, active, screening, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`,
+    )
+      .bind(
+        row.id,
+        row.key,
+        row.label,
+        row.help,
+        row.type,
+        row.section,
+        JSON.stringify(row.categories),
+        row.buyerTypes ? JSON.stringify(row.buyerTypes) : null,
+        row.required ? 1 : 0,
+        row.multiple ? 1 : 0,
+        row.options ? JSON.stringify(row.options) : null,
+        row.condition ? JSON.stringify(row.condition) : null,
+        row.sort,
+        row.screening ? 1 : 0,
+        stamp,
+        stamp,
+      )
+      .run();
+  }
 }

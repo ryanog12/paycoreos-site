@@ -18,10 +18,12 @@ export async function renderApply(c: AppContext): Promise<Response> {
   const category = isCategory(categoryRaw) ? categoryRaw : "";
   const buyerRaw = url.searchParams.get("buyer") || "";
   const buyer = buyerRaw === "existing" || buyerRaw === "first" ? buyerRaw : "";
+  const declined = url.searchParams.get("declined") === "1";
   const user = c.get("user");
   const upsell = url.searchParams.get("upsell") === "1" && user?.role === "merchant";
   const fields = await loadFields(c.env.DB);
   let prefill: Answers = category ? defaultAnswers(category) : {};
+  if (declined) prefill.declined_by_bank = "yes";
   let parentId = "";
   if (upsell && user) {
     const parent = await findDefenseParent(c.env.DB, user.id, url.searchParams.get("parent"));
@@ -51,6 +53,7 @@ export async function renderApply(c: AppContext): Promise<Response> {
       parentId,
       attrHtml: hiddenAttr(attr),
       email: user?.role === "merchant" ? user.email : "",
+      declined,
     }),
   });
   return c.html(html);
@@ -117,13 +120,14 @@ export async function submitApply(c: AppContext): Promise<Response> {
       else parentId = parent.id;
     }
   }
+  const arrivedDeclined = String(form.get("declined") || "") === "1" || answerString(answers.declined_by_bank) === "yes";
   const { attr } = parseAttr(url, c.req.header("cookie"));
   for (const key of ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "gclid", "gbraid", "wbraid", "fbclid", "li_fat_id"] as const) {
     const posted = cleanText(String(form.get(key) || ""), 300);
     if (posted) attr[key] = posted;
   }
   if (errors.length || !category) {
-    return c.html(applyErrorPage(url, category, buyer, fields, answers, errors, user, Boolean(parentId) || form.get("upsell") === "1", requestedParent, hiddenAttr(attr), email), 400);
+    return c.html(applyErrorPage(url, category, buyer, fields, answers, errors, user, Boolean(parentId) || form.get("upsell") === "1", requestedParent, hiddenAttr(attr), email, arrivedDeclined), 400);
   }
   const existing = await c.env.DB.prepare("SELECT id, role, password_hash, name FROM users WHERE email = ?")
     .bind(email)
@@ -141,7 +145,7 @@ export async function submitApply(c: AppContext): Promise<Response> {
     }
   }
   if (errors.length) {
-    return c.html(applyErrorPage(url, category, buyer, fields, answers, errors, user, Boolean(requestedParent), requestedParent, hiddenAttr(attr), email), 400);
+    return c.html(applyErrorPage(url, category, buyer, fields, answers, errors, user, Boolean(requestedParent), requestedParent, hiddenAttr(attr), email, arrivedDeclined), 400);
   }
   const visibleFiles: { field: FieldDef; file: File }[] = [];
   for (const field of fields) {
@@ -153,7 +157,7 @@ export async function submitApply(c: AppContext): Promise<Response> {
     }
   }
   if (errors.length) {
-    return c.html(applyErrorPage(url, category, buyer, fields, answers, errors, user, Boolean(requestedParent), requestedParent, hiddenAttr(attr), email), 400);
+    return c.html(applyErrorPage(url, category, buyer, fields, answers, errors, user, Boolean(requestedParent), requestedParent, hiddenAttr(attr), email, arrivedDeclined), 400);
   }
   const storedAnswers: Answers = {};
   for (const field of fields) {
@@ -187,8 +191,8 @@ export async function submitApply(c: AppContext): Promise<Response> {
     `INSERT INTO applications (
       id, public_ref, category, buyer_type, status_id, email, contact_name, legal_business_name, answers_json, parent_application_id,
       utm_source, utm_medium, utm_campaign, utm_content, utm_term, gclid, gbraid, wbraid, fbclid, li_fat_id,
-      landing_path, first_vertical, first_buyer_type, fee_status, fee_amount_cents, merchant_user_id, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'not_collected', ?, ?, ?, ?)`,
+      landing_path, first_vertical, first_buyer_type, declined_by_bank, declined_bank, fee_status, fee_amount_cents, merchant_user_id, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'not_collected', ?, ?, ?, ?)`,
   )
     .bind(
       appId,
@@ -214,6 +218,8 @@ export async function submitApply(c: AppContext): Promise<Response> {
       attr.first_landing_path ?? null,
       attr.first_vertical ?? category,
       attr.first_buyer_type ?? effectiveBuyer,
+      answerString(storedAnswers.declined_by_bank) === "yes" ? 1 : 0,
+      answerString(storedAnswers.declined_by_bank) === "yes" ? cleanText(answerString(storedAnswers.declined_bank), 200) : "",
       FEE_CENTS,
       userId,
       stamp,
@@ -303,12 +309,13 @@ function applyErrorPage(
   parentId: string,
   attrHtml: string,
   email: string,
+  declined: boolean,
 ): string {
   return layout({
     hostname: url.hostname,
     seo: applySeo(category),
     current: "/apply",
-    main: applyMain({ category, buyer, fields, answers, errors, user, upsell, parentId, attrHtml, email }),
+    main: applyMain({ category, buyer, fields, answers, errors, user, upsell, parentId, attrHtml, email, declined }),
   });
 }
 
@@ -323,6 +330,7 @@ function applyMain(input: {
   parentId: string;
   attrHtml: string;
   email: string;
+  declined: boolean;
 }): string {
   const categories = input.upsell ? CATEGORIES.filter((item) => item.value !== "dispute-defense") : CATEGORIES;
   const options = categories
@@ -341,6 +349,7 @@ function applyMain(input: {
   const chooser = `<form class="chooser" method="get" action="/apply">
     ${input.attrHtml}
     ${input.upsell ? '<input type="hidden" name="upsell" value="1">' : ""}
+    ${input.declined ? '<input type="hidden" name="declined" value="1">' : ""}
     <label>Category
       <select name="category">${`<option value="">Choose a category</option>`}${options}</select>
     </label>
@@ -357,6 +366,7 @@ function applyMain(input: {
       <input type="hidden" name="category" value="${esc(input.category)}">
       ${buyer ? `<input type="hidden" name="buyer" value="${esc(buyer)}">` : ""}
       ${input.parentId ? `<input type="hidden" name="parent_application_id" value="${esc(input.parentId)}">` : ""}
+      ${input.declined ? '<input type="hidden" name="declined" value="1">' : ""}
       <p class="form-promise">${promise(input.category, buyer)}</p>
       ${errors}
       ${renderFieldGroups(visible, input.category, buyer, input.answers)}

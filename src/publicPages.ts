@@ -31,52 +31,7 @@ export function marketingMain(path: string, url: URL, contactReceived: boolean):
   const apply = (href: string) => withQuery(href, url);
   switch (path) {
     case "/":
-      return `${hero({
-        eyebrow: "PaycoreOS · a DBA of Telecom Elite, Inc. · Since 2013",
-        h1: "PaycoreOS places call centers, online stores, retailers, and restaurants into processing, point of sale, and Visa and Mastercard dispute defense.",
-        lede: "One application. The form matches the business. A real person submits it. We match the account, the gateway or terminal, and dispute defense to the way you actually take payments.",
-        support: "Most underwriting decisions within 24–72 business hours. That is our usual pace, not a guarantee.",
-        primary: "Apply",
-        primaryHref: apply("/apply"),
-        secondary: "Services",
-        secondaryHref: "/services",
-      })}
-      <section class="wrap band">
-        <h2>Who it is for</h2>
-        <div class="card-grid">
-          <a class="card" href="${esc(apply("/switching"))}"><h3>Already processing?</h3><p>Bring your statement. Call centers, online stores, retailers, and restaurants.</p></a>
-          <a class="card" href="${esc(apply("/startups"))}"><h3>First merchant account</h3><p>A new business still needs a legal entity, a business bank account, and an owner ID.</p></a>
-          <a class="card" href="${esc(apply("/dispute-defense"))}"><h3>Dispute defense only</h3><p>For a business that already accepts cards and is not asking for a new processing account.</p></a>
-        </div>
-      </section>
-      <section class="wrap">
-        <h2>The businesses</h2>
-        <div class="card-grid">
-          <a class="card" href="${esc(apply("/call-centers"))}"><h3>Call centers</h3><p>Card-not-present processing for call centers.</p></a>
-          <a class="card" href="${esc(apply("/ecommerce"))}"><h3>eCommerce</h3><p>Gateway, checkout, and chargeback defense for online stores.</p></a>
-          <a class="card" href="${esc(apply("/retail"))}"><h3>Retail</h3><p>In-person processing and POS for retail.</p></a>
-          <a class="card" href="${esc(apply("/restaurants"))}"><h3>Restaurants</h3><p>Restaurant processing and handheld checkout.</p></a>
-        </div>
-      </section>
-      <section class="wrap band">
-        <h2>What we place</h2>
-        <div class="card-grid">
-          <article class="card"><h3>Take the payment</h3><p>Card payments in person, online, and by phone. Bank payments (ACH). A virtual terminal. A payment gateway and hosted checkout, including the Authorize.Net gateway and the NMI gateway. PaycoreOS is a reseller of both gateways. A gateway is not a processor. Payment links.</p></article>
-          <article class="card"><h3>Bill again</h3><p>Invoices by email or text. Recurring and subscription billing. Card on file.</p></article>
-          <article class="card"><h3>In person</h3><p>Counter terminal, handheld terminal, and tap to pay on a phone. A Clover terminal the business already owns can be connected. PaycoreOS does not ship a new Clover unit.</p></article>
-          <article class="card"><h3>Dispute defense</h3><p>Its own service for a business that already accepts cards. Visa Order Insight, Rapid Dispute Resolution, the Cardholder Dispute Resolution Network, Resolve, and Compelling Evidence 3.0. Mastercard Ethoca Alerts and Ethoca Consumer Clarity.</p></article>
-        </div>
-        <p class="note">Surcharging and dual pricing are programs a business can ask about. PaycoreOS does not publish a processing rate.</p>
-      </section>
-      <section class="wrap steps">
-        <h2>How an application moves</h2>
-        <ol>
-          <li>You choose the category and complete the form.</li>
-          <li>The $39 fee is shown after the form. It is not collected until the fee account is ready.</li>
-          <li>A person at PaycoreOS reviews the file and submits it. We do not tell you which company receives it.</li>
-          <li>The merchant portal shows the timeline in plain language.</li>
-        </ol>
-      </section>`;
+      return homePage(apply);
     case "/call-centers":
       return `${hero({
         eyebrow: "PaycoreOS · a DBA of Telecom Elite, Inc. · Since 2013",
@@ -172,6 +127,26 @@ export function marketingMain(path: string, url: URL, contactReceived: boolean):
               return `<a class="card" href="${esc(apply(`/apply?vertical=${value}&buyer=existing`))}"><h3>${label}</h3><p>I already accept cards.</p></a>`;
             })
             .join("")}
+        </div>
+      </section>`;
+    case "/declined":
+      return `${hero({
+        eyebrow: "PaycoreOS · a DBA of Telecom Elite, Inc. · Since 2013",
+        h1: "Declined by a big bank?",
+        lede: "PaycoreOS still submits the application. Most underwriting decisions within 24–72 business hours. That is not a promise of approval.",
+        support: "Choose the business below. The application then asks whether a bank declined you, which bank, and for an optional copy of the notice.",
+        primary: "Choose a business",
+        primaryHref: "#business",
+      })}
+      <section class="wrap" id="business">
+        <h2>Choose the business</h2>
+        <p>The application is still for a call center, an online store, retail, a restaurant, or dispute defense.</p>
+        <div class="card-grid">
+          <a class="card" href="${esc(apply("/apply?vertical=call-centers&declined=1"))}"><h3>Call center</h3><p>Card-not-present processing.</p></a>
+          <a class="card" href="${esc(apply("/apply?vertical=ecommerce&declined=1"))}"><h3>Online store</h3><p>Gateway and checkout.</p></a>
+          <a class="card" href="${esc(apply("/apply?vertical=retail&declined=1"))}"><h3>Retail</h3><p>In-person processing and POS.</p></a>
+          <a class="card" href="${esc(apply("/apply?vertical=restaurants&declined=1"))}"><h3>Restaurant</h3><p>Restaurant processing and handheld checkout.</p></a>
+          <a class="card" href="${esc(apply("/apply?category=dispute-defense&declined=1"))}"><h3>Dispute defense</h3><p>For a business that already accepts cards. This does not open a processing account.</p></a>
         </div>
       </section>`;
     case "/startups":
@@ -305,6 +280,57 @@ export function marketingMain(path: string, url: URL, contactReceived: boolean):
     default:
       return null;
   }
+}
+
+function pathCard(href: string, src: string, alt: string, title: string, benefit: string): string {
+  return `<a class="path-card" href="${esc(href)}">
+    <img src="${esc(src)}" alt="${esc(alt)}" width="1152" height="864">
+    <h3>${esc(title)}</h3>
+    <p>${esc(benefit)}</p>
+  </a>`;
+}
+
+function productBlock(src: string, alt: string, title: string, href: string, copy: string): string {
+  return `<article class="product">
+    <img src="${esc(src)}" alt="${esc(alt)}" width="1152" height="864">
+    <div>
+      <h3><a href="${esc(href)}">${esc(title)}</a></h3>
+      <p>${esc(copy)}</p>
+    </div>
+  </article>`;
+}
+
+function homePage(apply: (href: string) => string): string {
+  return `<header class="home-hero">
+    <h1>Processing, point of sale, and dispute defense.</h1>
+    <p class="home-sub">For call centers, online stores, retailers, and restaurants. Already processing, just starting, or declined by a big bank.</p>
+    <div class="home-cta">
+      <a class="btn-p" href="${esc(apply("/apply"))}">Apply</a>
+      <p class="home-fee">The application fee is $39.</p>
+    </div>
+  </header>
+  <section class="home-section">
+    <h2>Choose the business</h2>
+    <div class="path-grid">
+      ${pathCard(apply("/call-centers"), "/assets/home/home-call-centers.jpg", "Call center agents wearing headsets", "Call centers", "Take card payments over the phone, with a virtual terminal and invoicing.")}
+      ${pathCard(apply("/ecommerce"), "/assets/home/home-ecommerce.jpg", "Boxes packed for an online store", "Online stores", "Add a gateway, checkout, and chargeback defense for the store.")}
+      ${pathCard(apply("/retail"), "/assets/home/home-retail.jpg", "Retail counter with folded goods and a card reader", "Retail", "Take cards at the counter, on a handheld, or with tap to pay.")}
+      ${pathCard(apply("/restaurants"), "/assets/home/home-restaurants.jpg", "Server holding a handheld card reader in a restaurant", "Restaurants", "Check out at the table or the counter with a handheld.")}
+      ${pathCard(apply("/dispute-defense"), "/assets/home/home-dispute.jpg", "Business owner reviewing dispute paperwork", "Dispute defense", "For a business that already accepts cards and wants dispute tools.")}
+      ${pathCard(apply("/declined"), "/assets/home/home-declined.jpg", "Shop owner holding a plain envelope", "Declined by a big bank", "A bank decline does not stop the PaycoreOS application.")}
+    </div>
+    <p class="home-also">Already processing? <a href="${esc(apply("/switching"))}">Bring your statement.</a> New business? <a href="${esc(apply("/startups"))}">Open a first merchant account.</a></p>
+  </section>
+  <section class="home-section home-products">
+    <h2>What you can add</h2>
+    <div class="product-list">
+      ${productBlock("/assets/home/home-take-payment.jpg", "Hand tapping a card on an unbranded reader", "Take the payment", apply("/services"), "Cards in person, online, and by phone. Bank payments, a virtual terminal, and payment links.")}
+      ${productBlock("/assets/home/home-bill-again.jpg", "Merchant sending an invoice from a phone", "Bill again", apply("/services"), "Send an invoice by email or text, bill on a schedule, and keep a card on file.")}
+      ${productBlock("/assets/home/home-pos.jpg", "Unbranded counter terminal and handheld reader", "In-person point of sale", apply("/retail"), "A counter terminal, a handheld, or tap to pay on a phone. A Clover terminal you already own can be connected.")}
+      ${productBlock("/assets/home/home-dispute.jpg", "Business owner reviewing dispute paperwork", "Dispute defense", apply("/dispute-defense"), "Visa and Mastercard dispute tools for a business that already accepts cards. This does not open a new processing account.")}
+      ${productBlock("/assets/home/home-gateways.jpg", "Person shopping on a laptop beside a bag", "Authorize.Net and NMI", apply("/services"), "PaycoreOS resells the Authorize.Net gateway and the NMI gateway for checkout and hosted payments.")}
+    </div>
+  </section>`;
 }
 
 export function seoOrThrow(path: string): PageSeo {

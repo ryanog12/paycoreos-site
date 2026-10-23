@@ -17,6 +17,7 @@ const FOOTER_LINKS = [
   ["/restaurants", "Restaurants"],
   ["/switching", "Already processing"],
   ["/startups", "New businesses"],
+  ["/declined", "Declined by a bank"],
   ["/dispute-defense", "Dispute defense"],
   ["/services", "Services"],
   ["/apply", "Apply"],

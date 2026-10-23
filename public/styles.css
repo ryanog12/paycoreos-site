@@ -201,7 +201,99 @@ th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--lin
 .plain-list { list-style: none; padding: 0; }
 .plain-list li { background: #fff; border: 1px solid var(--line); padding: 10px 12px; margin: 8px 0; }
 .plain-list span, .timeline time { display: block; color: var(--muted); font-size: 0.85rem; }
+.home-hero {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 88px 6% 24px;
+}
+.home-hero h1 {
+  font-size: clamp(2.6rem, 6.4vw, 4.6rem);
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  max-width: 12ch;
+  margin: 0 0 24px;
+}
+.home-sub {
+  font-size: clamp(1.2rem, 2.2vw, 1.45rem);
+  line-height: 1.45;
+  max-width: 38rem;
+  margin: 0 0 36px;
+  color: var(--body);
+}
+.home-cta {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.home-cta .btn-p {
+  font-size: 1.05rem;
+  padding: 18px 32px;
+}
+.home-fee {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--body);
+}
+.home-section {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 72px 6% 16px;
+}
+.home-section h2 {
+  font-size: clamp(1.9rem, 3vw, 2.6rem);
+  margin: 0 0 32px;
+}
+.path-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 36px 28px;
+}
+.path-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: inherit;
+  text-decoration: none;
+}
+.path-card img, .product img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 14px;
+  background: var(--alt);
+}
+.path-card h3 {
+  font-size: 1.4rem;
+  margin: 8px 0 0;
+}
+.path-card p, .product p {
+  margin: 0;
+  font-size: 1.08rem;
+  line-height: 1.5;
+}
+.path-card:hover h3 { color: var(--green-d); }
+.home-also {
+  margin: 40px 0 0;
+  font-size: 1.2rem;
+}
+.home-products { padding-bottom: 72px; }
+.product-list { display: grid; gap: 56px; }
+.product {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) 1fr;
+  gap: 36px;
+  align-items: center;
+}
+.product h3 { font-size: 1.7rem; margin: 0 0 10px; }
+.product h3 a { color: inherit; text-decoration: none; }
+.product h3 a:hover { color: var(--green-d); }
 @media (max-width: 800px) {
+  .home-hero { padding-top: 48px; }
+  .home-hero h1 { max-width: none; }
+  .path-grid, .product { grid-template-columns: 1fr; }
+  .home-section { padding-top: 48px; }
+  .product-list { gap: 40px; }
   .split { grid-template-columns: 1fr; }
   .ntoggle { display: flex; }
   .nl { display: none; }

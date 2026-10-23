@@ -4,7 +4,7 @@ const failures = [];
 function fail(msg) { failures.push(msg); console.error("FAIL", msg); }
 function ok(msg) { console.log("OK", msg); }
 
-const pages = ["/", "/call-centers", "/ecommerce", "/retail", "/restaurants", "/switching", "/startups", "/dispute-defense", "/services", "/apply", "/about", "/contact", "/privacy", "/terms", "/application-fee"];
+const pages = ["/", "/call-centers", "/ecommerce", "/retail", "/restaurants", "/switching", "/startups", "/declined", "/dispute-defense", "/services", "/apply", "/about", "/contact", "/privacy", "/terms", "/application-fee"];
 const html = {};
 for (const path of pages) {
   const res = await fetch(base + path);
@@ -40,6 +40,8 @@ else {
   const names = JSON.stringify(data);
   if (banned.test(names)) fail("json-ld names a supplier");
   if (!names.includes("Authorize.Net gateway") || !names.includes("NMI gateway") || !names.includes("Dispute defense")) fail("json-ld services");
+  if (!names.includes("Applications after a bank decline")) fail("json-ld missing bank-decline service");
+  if (/aggregateRating|reviewCount|ratingValue/i.test(names)) fail("json-ld has a rating");
 }
 for (const path of pages) {
   const canon = path === "/" ? "https://paycoreos.com/" : `https://paycoreos.com${path}`;
@@ -51,6 +53,19 @@ if (!html["/dispute-defense"].includes("MID") || !html["/dispute-defense"].inclu
 if (html["/dispute-defense"].includes("Start a processing application")) fail("upsell is on the defense page");
 if (!html["/switching"].includes("Already processing? Bring your statement.")) fail("switching h1");
 if (!html["/call-centers"].includes("Card-not-present processing for call centers")) fail("call center h1");
+if (!html["/declined"].includes("<h1>Declined by a big bank?</h1>")) fail("declined h1");
+if (!html["/declined"].includes("PaycoreOS still submits the application. Most underwriting decisions within 24–72 business hours. That is not a promise of approval.")) fail("declined support line");
+if (!html["/declined"].includes("declined=1")) fail("declined page does not link into apply");
+if (!html["/declined"].includes("$39")) fail("declined page missing fee");
+if (/guaranteed approval|guaranteed placement/i.test(html["/declined"])) fail("declined page promises approval");
+if (!html["/"].includes('href="/declined"') && !html["/"].includes("href=\"/declined?")) fail("home missing declined path");
+const declinedApply = await (await fetch(base + "/apply?vertical=ecommerce&declined=1")).text();
+if (!declinedApply.includes("Were you declined by a bank?")) fail("apply missing bank-decline question");
+if (!declinedApply.includes('name="f_declined_by_bank" value="yes" checked')) fail("declined=1 did not select yes");
+if (!declinedApply.includes("Which bank?")) fail("declined=1 missing bank name");
+if (!declinedApply.includes('name="file_decline_notice"')) fail("declined=1 missing optional notice");
+if (/name="file_decline_notice"[^>]*required/.test(declinedApply)) fail("decline notice is required");
+if (banned.test(declinedApply)) fail("declined apply names a supplier");
 const thanks = await fetch(base + "/thank-you");
 const thanksHtml = await thanks.text();
 if (thanks.status !== 404) fail(`thank-you status ${thanks.status}`);
@@ -105,6 +120,7 @@ const fields = {
   website_url: "https://audit.example",
 };
 for (const [key, value] of Object.entries(fields)) form.set("f_" + key, value);
+form.set("f_declined_by_bank", "no");
 form.append("f_defense_tools", "order_insight");
 form.append("f_defense_tools", "ethoca_alerts");
 const submitted = await fetch(base + "/apply", { method: "POST", body: form, redirect: "manual" });
@@ -218,6 +234,7 @@ missing.set("f_swipe_band", "under_70");
 missing.set("f_website_url", "https://call.example");
 missing.set("f_website_username", "owner");
 missing.set("f_website_password", "site-pass");
+missing.set("f_declined_by_bank", "no");
 const denied = await fetch(base + "/apply", { method: "POST", body: missing });
 const deniedHtml = await denied.text();
 if (denied.status !== 400) fail(`call center without files status ${denied.status}`);
@@ -234,6 +251,55 @@ const sent = await fetch(base + "/contact", { method: "POST", body: contact, red
 if (sent.status < 300 || sent.status > 399) fail(`contact ${sent.status}`);
 const received = await (await fetch(base + "/contact?received=1")).text();
 if (!received.includes("We saved your message")) fail("contact confirmation missing");
+
+const declinedForm = new FormData();
+declinedForm.set("category", "dispute-defense");
+declinedForm.set("declined", "1");
+declinedForm.set("email", "declined-audit@example.com");
+declinedForm.set("password", "portal-password-1");
+declinedForm.set("password_confirm", "portal-password-1");
+declinedForm.set("agree", "yes");
+declinedForm.set("f_declined_by_bank", "yes");
+declinedForm.set("f_legal_business_name", "Declined Audit LLC");
+declinedForm.set("f_contact_name", "Dee Clined");
+declinedForm.set("f_phone", "407-555-0144");
+declinedForm.set("f_business_address", "9 Main St");
+declinedForm.set("f_city", "Oviedo");
+declinedForm.set("f_state", "FL");
+declinedForm.set("f_zip", "32765");
+declinedForm.set("f_accepts_cards", "yes");
+declinedForm.set("f_merchant_processor", "Square");
+declinedForm.set("f_descriptor", "DECLINED AUDIT");
+declinedForm.set("f_mid", "MID555");
+declinedForm.set("f_caid", "CAID555");
+declinedForm.set("f_website_url", "https://declined.example");
+declinedForm.append("f_defense_tools", "order_insight");
+const missingBank = await fetch(base + "/apply", { method: "POST", body: declinedForm, redirect: "manual" });
+const missingBankHtml = await missingBank.text();
+if (missingBank.status !== 400 || !missingBankHtml.includes("Which bank?")) fail(`bank name not required ${missingBank.status}`);
+declinedForm.set("f_declined_bank", "Example National Bank");
+const declinedSubmit = await fetch(base + "/apply", { method: "POST", body: declinedForm, redirect: "manual" });
+if (declinedSubmit.status !== 303) {
+  const err = await declinedSubmit.text();
+  fail(`declined submit ${declinedSubmit.status} ${err.slice(0, 400)}`);
+} else {
+  const loc = declinedSubmit.headers.get("location") || "";
+  const ref = loc.split("ref=")[1];
+  const session = (declinedSubmit.headers.getSetCookie?.() || []).find((c) => c.startsWith("paycore_session="));
+  const portalHtml = await (await fetch(base + "/portal/app/" + ref, { headers: { cookie: session.split(";")[0] } })).text();
+  if (!portalHtml.includes("Example National Bank")) fail("portal missing the bank the merchant named");
+  if (banned.test(portalHtml)) fail("declined portal names a supplier");
+  const adminForm = new FormData();
+  adminForm.set("email", "admin@paycoreos.com");
+  adminForm.set("password", process.env.ADMIN_PASSWORD || "");
+  const adminLogin = await fetch(base + "/admin/login", { method: "POST", body: adminForm, redirect: "manual" });
+  const adminCookie = (adminLogin.headers.getSetCookie?.() || []).find((c) => c.startsWith("paycore_session="));
+  const detailHtml = await (await fetch(base + "/admin/applications/" + ref, { headers: { cookie: adminCookie.split(";")[0] } })).text();
+  if (!detailHtml.includes("Declined by a bank:") || !detailHtml.includes(">Yes<") || !detailHtml.includes("Example National Bank")) {
+    fail("admin missing declined-by-bank flag");
+  }
+  ok("declined application " + ref);
+}
 
 if (failures.length) {
   console.error(`\n${failures.length} failures`);

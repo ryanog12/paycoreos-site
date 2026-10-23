@@ -13,8 +13,8 @@ export const PAGES: PageSeo[] = [
     path: "/",
     title: "PaycoreOS | Processing, point of sale, and dispute defense",
     description:
-      "PaycoreOS, a DBA of Telecom Elite, Inc., places call centers, online stores, retailers, and restaurants into processing, point of sale, and dispute defense. The application fee is $39.",
-    h1: "PaycoreOS places call centers, online stores, retailers, and restaurants into processing, point of sale, and Visa and Mastercard dispute defense.",
+      "Processing, point of sale, and dispute defense for call centers, online stores, retailers, and restaurants. Already processing, a new business, or declined by a big bank. The application fee is $39.",
+    h1: "Processing, point of sale, and dispute defense.",
   },
   {
     path: "/call-centers",
@@ -61,6 +61,13 @@ export const PAGES: PageSeo[] = [
     description:
       "First merchant account for a new business. You need a legal entity, a business bank account, and an owner ID. The $39 fee is not an approval.",
     h1: "First merchant account for a new business",
+  },
+  {
+    path: "/declined",
+    title: "Declined by a big bank? | PaycoreOS",
+    description:
+      "PaycoreOS still submits the application after a bank decline. Most underwriting decisions within 24–72 business hours. That is not a promise of approval. The application fee is $39.",
+    h1: "Declined by a big bank?",
   },
   {
     path: "/dispute-defense",
@@ -181,6 +188,7 @@ Business owners who need a merchant account approved and then kept in good stand
 - Point of sale: counter terminal, handheld terminal, and tap to pay on a phone. A Clover terminal the business already owns can be connected. PaycoreOS does not ship a new Clover unit.
 - Dispute defense for businesses that already accept cards: Visa Order Insight, Rapid Dispute Resolution, the Cardholder Dispute Resolution Network, Resolve, and Compelling Evidence 3.0; Mastercard Ethoca Alerts and Ethoca Consumer Clarity. Enrollment asks for the current processor, descriptor, website, merchant ID (MID), and card acceptor ID (CAID).
 - Surcharging and dual pricing as programs a business can ask about
+- Applications after a bank decline. PaycoreOS still submits the application. Most underwriting decisions within 24–72 business hours. That is not a promise of approval. The merchant names the bank. A decline notice is optional. PaycoreOS does not tell the merchant which company receives the file.
 
 ## Fee
 
@@ -205,6 +213,7 @@ ${EMAIL}
 - [Restaurants](${SITE_ORIGIN}/restaurants): Restaurant processing and handheld checkout
 - [Already processing](${SITE_ORIGIN}/switching): Already processing? Bring your statement.
 - [New businesses](${SITE_ORIGIN}/startups): First merchant account for a new business
+- [Declined by a bank](${SITE_ORIGIN}/declined): Declined by a big bank? PaycoreOS still submits the application.
 - [Dispute defense](${SITE_ORIGIN}/dispute-defense): Dispute defense for businesses that already accept cards
 - [Services](${SITE_ORIGIN}/services): Capabilities, gateways, and dispute defense
 - [Apply](${SITE_ORIGIN}/apply): The application
@@ -235,6 +244,11 @@ export function homeJsonLd(): unknown {
     service("Virtual terminal", `${SITE_ORIGIN}/services`, "Virtual terminal for phone and invoice payments."),
     service("Invoicing and recurring billing", `${SITE_ORIGIN}/services`, "Invoices by email or text, and recurring billing."),
     service("Dispute defense", `${SITE_ORIGIN}/dispute-defense`, "Visa and Mastercard dispute defense for a business that already accepts cards."),
+    service(
+      "Applications after a bank decline",
+      `${SITE_ORIGIN}/declined`,
+      "PaycoreOS still submits the application after a bank decline. Most underwriting decisions within 24–72 business hours. That is not a promise of approval.",
+    ),
   ];
   return {
     "@context": "https://schema.org",
