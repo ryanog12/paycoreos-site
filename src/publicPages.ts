@@ -302,12 +302,18 @@ function productBlock(src: string, alt: string, title: string, href: string, cop
 
 function homePage(apply: (href: string) => string): string {
   return `<header class="home-hero">
-    <h1>Processing, point of sale, and dispute defense.</h1>
-    <p class="home-sub">For call centers, online stores, retailers, and restaurants. Already processing, just starting, or declined by a big bank.</p>
-    <div class="home-cta">
-      <a class="btn-p" href="${esc(apply("/apply"))}">Apply</a>
-      <p class="home-fee">The application fee is $39.</p>
+    <div class="home-hero-copy">
+      <p class="eyebrow">Merchant processing</p>
+      <h1>Processing, point of sale, and dispute defense.</h1>
+      <p class="home-sub">For call centers, online stores, retailers, and restaurants. Already processing, just starting, or declined by a big bank.</p>
+      <div class="home-cta">
+        <a class="btn-p" href="${esc(apply("/apply"))}">Apply</a>
+        <p class="home-fee">The application fee is $39.</p>
+      </div>
     </div>
+    <figure class="home-hero-figure">
+      <img src="/assets/home/home-hero.jpg" alt="A merchant at a counter taking a card payment with a handheld reader" width="1152" height="864">
+    </figure>
   </header>
   <section class="home-section">
     <h2>Choose the business</h2>

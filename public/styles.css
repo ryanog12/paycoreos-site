@@ -202,23 +202,56 @@ th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--lin
 .plain-list li { background: #fff; border: 1px solid var(--line); padding: 10px 12px; margin: 8px 0; }
 .plain-list span, .timeline time { display: block; color: var(--muted); font-size: 0.85rem; }
 .home-hero {
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 88px 6% 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(260px, 0.92fr);
+  gap: 36px 64px;
+  align-items: center;
+  padding: 72px max(24px, calc((100% - 1120px) / 2)) 68px;
+  background:
+    radial-gradient(640px 420px at 10% 18%, rgba(74, 158, 65, 0.18), transparent 68%),
+    radial-gradient(520px 380px at 96% 88%, rgba(42, 107, 124, 0.12), transparent 70%),
+    linear-gradient(180deg, #eef5ef 0%, #ffffff 80%);
 }
+.home-hero-copy { min-width: 0; }
+.home-hero .eyebrow { margin: 0; }
 .home-hero h1 {
-  font-size: clamp(2.6rem, 6.4vw, 4.6rem);
-  letter-spacing: -0.035em;
-  line-height: 1.02;
-  max-width: 12ch;
-  margin: 0 0 24px;
+  font-size: clamp(2.35rem, 4vw, 3.6rem);
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+  max-width: 12em;
+  margin: 14px 0 18px;
 }
 .home-sub {
-  font-size: clamp(1.2rem, 2.2vw, 1.45rem);
-  line-height: 1.45;
-  max-width: 38rem;
-  margin: 0 0 36px;
+  font-size: clamp(1.15rem, 2vw, 1.35rem);
+  line-height: 1.5;
+  max-width: 36rem;
+  margin: 0 0 32px;
   color: var(--body);
+}
+.home-hero-figure {
+  position: relative;
+  margin: 0;
+  min-width: 0;
+  padding: 0 0 18px 18px;
+}
+.home-hero-figure::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: calc(100% - 18px);
+  height: calc(100% - 22px);
+  background: var(--teal);
+  border-radius: 24px;
+}
+.home-hero-figure img {
+  position: relative;
+  display: block;
+  width: calc(100% - 18px);
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 22px;
+  background: var(--alt);
 }
 .home-cta {
   display: flex;
@@ -289,8 +322,13 @@ th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--lin
 .product h3 a { color: inherit; text-decoration: none; }
 .product h3 a:hover { color: var(--green-d); }
 @media (max-width: 800px) {
-  .home-hero { padding-top: 48px; }
+  .home-hero {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 40px 22px 48px;
+  }
   .home-hero h1 { max-width: none; }
+  .home-hero-figure { max-width: 640px; }
   .path-grid, .product { grid-template-columns: 1fr; }
   .home-section { padding-top: 48px; }
   .product-list { gap: 40px; }

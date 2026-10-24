@@ -67,6 +67,13 @@ if (!html["/declined"].includes("declined=1")) fail("declined page does not link
 if (!html["/declined"].includes("$39")) fail("declined page missing fee");
 if (/guaranteed approval|guaranteed placement/i.test(html["/declined"])) fail("declined page promises approval");
 if (!html["/"].includes('href="/declined"') && !html["/"].includes("href=\"/declined?")) fail("home missing declined path");
+if (!html["/"].includes("Merchant processing")) fail("home missing eyebrow");
+if (!html["/"].includes("/assets/home/home-hero.jpg")) fail("home missing hero graphic");
+if ((html["/"].match(/class="btn-p"/g) || []).length !== 1) fail("home should have one primary Apply button");
+const homeFooter = html["/"].match(/<footer class="site-footer">[\s\S]*?<\/footer>/)?.[0] || "";
+if (/1809 E Broadway|\(407\) 270-2502|info@paycoreos.com|which company receives/i.test(homeFooter)) fail("homepage footer shows contact identity");
+const homeVisible = html["/"].replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/g, "");
+if (/1809 E Broadway|\(407\) 270-2502|info@paycoreos.com|which company receives the file/i.test(homeVisible)) fail("homepage shows address, phone, email, or processor sentence");
 const declinedApply = await (await fetch(base + "/apply?vertical=ecommerce&declined=1")).text();
 if (!declinedApply.includes("Were you declined by a bank?")) fail("apply missing bank-decline question");
 if (!declinedApply.includes('name="f_declined_by_bank" value="yes" checked')) fail("declined=1 did not select yes");
