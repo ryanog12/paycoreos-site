@@ -29,7 +29,11 @@ for (const path of pages) {
   }
   if (banned.test(text)) fail(`${path} names a supplier`);
   if (/stripe|js\.stripe|pk_live|pk_test/i.test(text)) fail(`${path} mentions Stripe`);
-  if (path !== "/about" && text.includes("98%")) fail(`${path} has 98%`);
+  const boardingPages = new Set(["/about", "/call-centers", "/ecommerce", "/retail", "/restaurants", "/switching", "/startups", "/declined"]);
+  if (text.includes("98%") && !boardingPages.has(path)) fail(`${path} has 98%`);
+  if (boardingPages.has(path) && path !== "/about" && !text.includes("98% boarding success across hundreds of applications since 2013")) {
+    fail(`${path} has 98% without the basis`);
+  }
   if (path !== "/apply" && path !== "/about" && /\d+(\.\d+)?%/.test(text.replace(/98%/g, ""))) fail(`${path} has a percent`);
 }
 if (!html["/about"].includes("98% boarding success across hundreds of applications since 2013")) fail("about missing 98% basis");
@@ -66,6 +70,20 @@ if (!html["/declined"].includes("PaycoreOS still submits the application. Most u
 if (!html["/declined"].includes("declined=1")) fail("declined page does not link into apply");
 if (!html["/declined"].includes("$39")) fail("declined page missing fee");
 if (/guaranteed approval|guaranteed placement/i.test(html["/declined"])) fail("declined page promises approval");
+const landing = ["/call-centers", "/ecommerce", "/retail", "/restaurants", "/switching", "/startups", "/declined", "/dispute-defense"];
+for (const path of landing) {
+  if (!html[path].includes("<h2>How it works</h2>")) fail(`${path} missing how it works`);
+  if (!html[path].includes("Tell us how you take payments") || !html[path].includes("We review the file") || !html[path].includes("We call you")) {
+    fail(`${path} missing the three steps`);
+  }
+  if (!html[path].includes('href="/application-fee"') && !html[path].includes("application-fee?")) fail(`${path} fee sentence missing link`);
+  if ((html[path].match(/class="btn-p"/g) || []).length !== 2) fail(`${path} should have Apply at the top and again after the story`);
+  if (html[path].includes("fee-box")) fail(`${path} still has the fee policy block`);
+  if (/guaranteed approval|guaranteed placement|beat any quote/i.test(html[path])) fail(`${path} overclaims`);
+  if (!html[path].includes("Want a read on the file first?")) fail(`${path} missing the call link`);
+}
+if (html["/dispute-defense"].includes("98%")) fail("defense page has 98%");
+if (html["/dispute-defense"].includes("Start a processing application")) fail("upsell is on the defense page");
 if (!html["/"].includes('href="/declined"') && !html["/"].includes("href=\"/declined?")) fail("home missing declined path");
 if (!html["/"].includes("Merchant processing")) fail("home missing eyebrow");
 if (!html["/"].includes("/assets/home/home-hero.jpg")) fail("home missing hero graphic");

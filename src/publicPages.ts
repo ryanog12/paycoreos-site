@@ -2,19 +2,51 @@ import { withQuery } from "./attr";
 import { pageSeo, type PageSeo } from "./seo";
 import { ADDRESS, categoryLabel, EMAIL, esc, feeBox, PHONE_DISPLAY, PHONE_TEL } from "./util";
 
-function hero(opts: { eyebrow: string; h1: string; lede: string; support: string; primary: string; primaryHref: string; secondaryHref?: string; secondary?: string }): string {
-  const second = opts.secondary && opts.secondaryHref ? `<a class="btn-s" href="${esc(opts.secondaryHref)}">${esc(opts.secondary)}</a>` : "";
-  return `<header class="hero">
-    <p class="eyebrow">${opts.eyebrow}</p>
-    <h1>${opts.h1}</h1>
-    <p class="lede">${opts.lede}</p>
-    ${feeBox()}
-    <div class="hero-actions">
-      <a class="btn-p" href="${esc(opts.primaryHref)}">${esc(opts.primary)}</a>
-      ${second}
+function offerPage(
+  apply: (href: string) => string,
+  opts: { h1: string; sub: string; applyHref: string; image: string; alt: string; painTitle: string; pain: string; story: string; boarding?: boolean },
+): string {
+  const href = esc(opts.applyHref);
+  const fee = `<p class="home-fee"><a href="${esc(apply("/application-fee"))}">The application fee is $39.</a></p>`;
+  const actions = (callLink: boolean) => `<div class="home-cta">
+      <a class="btn-p" href="${href}">Apply</a>
+      ${fee}
+      ${callLink ? `<p class="home-call"><a href="${esc(apply("/contact"))}#book">Want a read on the file first?</a></p>` : ""}
+    </div>`;
+  const proof =
+    opts.boarding === false
+      ? `<p>PaycoreOS is a DBA of Telecom Elite, Inc. The company has done this work since 2013.</p>`
+      : `<p>PaycoreOS is a DBA of Telecom Elite, Inc. The company has done this work since 2013.</p>
+    <p><strong>98% boarding success across hundreds of applications since 2013.</strong> That figure counts boarding outcomes on applications PaycoreOS handled in that period. It is not a promise that the next application is approved.</p>`;
+  return `<header class="land-hero">
+    <div class="land-copy">
+      <p class="eyebrow">PaycoreOS · since 2013</p>
+      <h1>${opts.h1}</h1>
+      <p class="land-sub">${opts.sub}</p>
+      ${actions(true)}
     </div>
-    <p class="support">${opts.support}</p>
-  </header>`;
+    <figure class="land-figure">
+      <img src="${esc(opts.image)}" alt="${esc(opts.alt)}" width="1152" height="864">
+    </figure>
+  </header>
+  <section class="land-proof wrap">${proof}</section>
+  <section class="land-pain wrap">
+    <h2>${opts.painTitle}</h2>
+    ${opts.pain}
+  </section>
+  <section class="land-steps wrap">
+    <h2>How it works</h2>
+    <ol class="step-list">
+      <li><h3>Tell us how you take payments</h3><p>The form matches the business. You say what you sell and how the card is taken.</p></li>
+      <li><h3>We review the file</h3><p>Most underwriting decisions within 24–72 business hours. That is the usual pace. It is not a promise of approval.</p></li>
+      <li><h3>We call you</h3><p>PaycoreOS calls to go over the file. The call is about 20 minutes.</p></li>
+    </ol>
+  </section>
+  <section class="land-story wrap">${opts.story}</section>
+  <section class="land-close wrap">
+    <h2>Start the application</h2>
+    ${actions(false)}
+  </section>`;
 }
 
 const TOOLS = `<ul class="plain">
@@ -58,113 +90,91 @@ export function marketingMain(path: string, url: URL, contactReceived: boolean):
     case "/":
       return homePage(apply);
     case "/call-centers":
-      return `${hero({
-        eyebrow: "PaycoreOS · a DBA of Telecom Elite, Inc. · Since 2013",
+      return offerPage(apply, {
         h1: "Card-not-present processing for call centers",
-        lede: "Phone payments, a virtual terminal, invoicing, and Visa and Mastercard dispute defense on one application. The form asks for the agreements, the scripts, and the articles of incorporation or organization.",
-        support: "Most underwriting decisions within 24–72 business hours. The $39 fee is for review and submission. It is not collected until the fee account is ready.",
-        primary: "Apply",
-        primaryHref: apply("/apply?vertical=call-centers"),
-        secondary: "Services",
-        secondaryHref: "/services",
-      })}
-      <section class="wrap">
-        <h2>What this application is for</h2>
-        <p>Owners who take payment by phone. The form loads phone acceptance: virtual terminal, invoice, QR, and payment links. Online checkout can be added if you also invoice or run a cart.</p>
-        <h2>Gateways</h2>
-        <p>PaycoreOS offers the Authorize.Net gateway and the NMI gateway. PaycoreOS is a reseller of both. They are gateways. They are not processors, and choosing one does not tell you which company receives the application.</p>
-        <h2>Dispute tools</h2>
-        ${TOOLS}
-        <h2>Files a call center must upload</h2>
+        sub: "For a floor that takes the card over the phone, not at a counter.",
+        applyHref: apply("/apply?vertical=call-centers"),
+        image: "/assets/home/home-call-centers.jpg",
+        alt: "Call center agents wearing headsets",
+        painTitle: "The card is on the phone",
+        pain: `<p>The agent needs a virtual terminal, an invoice, or a payment link while the caller is still on the line. A counter swipe account is the wrong file for that.</p>`,
+        story: `<h2>What this application includes</h2>
+        <p>Phone acceptance: a virtual terminal, an invoice, a QR code, and payment links. Online checkout can be added if you also run a cart. PaycoreOS resells the Authorize.Net gateway and the NMI gateway. They are gateways, not processors. Choosing one does not tell you which company receives the file.</p>
+        <h2>Files the form will not skip</h2>
         <ul class="plain">
-          <li>Agreements: the customer agreements the call center uses.</li>
-          <li>Scripts: the scripts agents read.</li>
+          <li>Agreements the call center uses.</li>
+          <li>Scripts the agents read.</li>
           <li>Articles of incorporation or organization.</li>
         </ul>
-        <p>The form does not submit without all three. You do not pick a processor for the script. We choose where the file goes, and we do not tell you which company that is.</p>
-      </section>`;
+        <h2>Dispute tools you can add</h2>
+        ${TOOLS}`,
+      });
     case "/ecommerce":
-      return `${hero({
-        eyebrow: "PaycoreOS · a DBA of Telecom Elite, Inc. · Since 2013",
+      return offerPage(apply, {
         h1: "Gateway, checkout, and chargeback defense for online stores",
-        lede: "A gateway or hosted checkout, recurring billing if you bill again, and Visa and Mastercard dispute tools so an unrecognized order does not have to become a chargeback.",
-        support: "Most underwriting decisions within 24–72 business hours. The $39 fee is for review and submission. It is not collected until the fee account is ready.",
-        primary: "Apply",
-        primaryHref: apply("/apply?vertical=ecommerce"),
-        secondary: "Services",
-        secondaryHref: "/services",
-      })}
-      <section class="wrap">
-        <h2>Gateways</h2>
-        <p>PaycoreOS offers the Authorize.Net gateway and the NMI gateway for online stores and call centers. PaycoreOS is a reseller of both. A gateway is how the payment is sent. It is not the processor, and it is not the company that decides the application.</p>
-        <h2>Also on this form</h2>
-        <p>Checkout, shopping cart, or gateway. A virtual terminal. Invoices. Recurring billing. Your website. If most sales are not in person, underwriting looks at the site and the form asks for a login. That login is for the review.</p>
+        sub: "For a store that takes the card on the website, and wants a dispute tool before the chargeback.",
+        applyHref: apply("/apply?vertical=ecommerce"),
+        image: "/assets/home/home-ecommerce.jpg",
+        alt: "Boxes packed for an online store",
+        painTitle: "Checkout, then the chargeback",
+        pain: `<p>The store needs a gateway or hosted checkout, and a way to answer an order the cardholder does not recognize. Recurring billing is on the same form if you bill again.</p>`,
+        story: `<h2>The gateway</h2>
+        <p>PaycoreOS resells the Authorize.Net gateway and the NMI gateway. A gateway sends the payment. It is not a processor, and choosing one does not tell you which company receives the file.</p>
+        <p>The form also asks about the cart, a virtual terminal, invoices, and the website. If most sales are not in person, it asks for a login so the review can see the store.</p>
         <h2>Dispute tools</h2>
-        ${TOOLS}
-      </section>`;
+        ${TOOLS}`,
+      });
     case "/retail":
-      return `${hero({
-        eyebrow: "PaycoreOS · a DBA of Telecom Elite, Inc. · Since 2013",
+      return offerPage(apply, {
         h1: "In-person processing and POS for retail",
-        lede: "A counter terminal, a handheld, or tap to pay on a phone. If you already have a Clover terminal, the application can say so. PaycoreOS does not ship a new Clover unit.",
-        support: "Most underwriting decisions within 24–72 business hours. The $39 fee is for review and submission. It is not collected until the fee account is ready.",
-        primary: "Apply",
-        primaryHref: apply("/apply?vertical=retail"),
-        secondary: "Services",
-        secondaryHref: "/services",
-      })}
-      <section class="wrap">
-        <h2>What you can ask for</h2>
-        <p>In-person cards, and online or phone if you also sell that way. Bank payments (ACH) if you want them. EBT, and an FNS number if you accept EBT. The portal shows the choice you made, such as handheld or counter. It does not name a supplier.</p>
-      </section>`;
+        sub: "For a counter, a handheld, or tap to pay on the floor.",
+        applyHref: apply("/apply?vertical=retail"),
+        image: "/assets/home/home-retail.jpg",
+        alt: "Retail counter with folded goods and a card reader",
+        painTitle: "The line at the counter",
+        pain: `<p>The card is taken where the goods are. A counter terminal, a handheld, or tap to pay on a phone. Phone or online can be added if you also sell that way.</p>`,
+        story: `<h2>What you can ask for</h2>
+        <p>In-person cards. Bank payments if you want them. EBT, and an FNS number if you take EBT.</p>
+        <p>A Clover terminal you already own can be connected. PaycoreOS does not ship a new Clover unit. The portal shows the choice you made, such as handheld or counter. It does not name a supplier.</p>`,
+      });
     case "/restaurants":
-      return `${hero({
-        eyebrow: "PaycoreOS · a DBA of Telecom Elite, Inc. · Since 2013",
+      return offerPage(apply, {
         h1: "Restaurant processing and handheld checkout",
-        lede: "Handheld checkout at the table, or a counter terminal. The same application as every other business. Tell us how you take payments.",
-        support: "Most underwriting decisions within 24–72 business hours. The $39 fee is for review and submission. It is not collected until the fee account is ready.",
-        primary: "Apply",
-        primaryHref: apply("/apply?vertical=restaurants"),
-        secondary: "Services",
-        secondaryHref: "/services",
-      })}
-      <section class="wrap">
-        <h2>What this page offers</h2>
-        <p>Restaurant processing and a handheld, a counter terminal, or tap to pay. A Clover terminal you already own can be connected. PaycoreOS does not ship a new Clover unit. If you accept EBT, the form asks for the FNS number.</p>
-      </section>`;
+        sub: "For a table or a counter, where the card is taken next to the guest.",
+        applyHref: apply("/apply?vertical=restaurants"),
+        image: "/assets/home/home-restaurants.jpg",
+        alt: "Server holding a handheld card reader in a restaurant",
+        painTitle: "Checkout where the guest is sitting",
+        pain: `<p>A handheld at the table, or a terminal at the counter. The same application as every other business. You say how the card is taken.</p>`,
+        story: `<h2>At the table or the counter</h2>
+        <p>A handheld, a counter terminal, or tap to pay. A Clover terminal you already own can be connected. PaycoreOS does not ship a new Clover unit. If you take EBT, the form asks for the FNS number.</p>`,
+      });
     case "/switching":
-      return `${hero({
-        eyebrow: "PaycoreOS · a DBA of Telecom Elite, Inc. · Since 2013",
+      return offerPage(apply, {
         h1: "Already processing? Bring your statement.",
-        lede: "Call centers, online stores, retailers, and restaurants. We review the statement with the application. This page does not quote a processing rate.",
-        support: "The $39 application fee is on this page and again on the form. It is not a processing rate. It is not collected until the fee account is ready.",
-        primary: "Apply",
-        primaryHref: apply("/apply?buyer=existing"),
-        secondary: "Services",
-        secondaryHref: "/services",
-      })}
-      <section class="wrap">
-        <h2>Choose the business</h2>
+        sub: "For a call center, online store, retailer, or restaurant that already accepts cards.",
+        applyHref: apply("/apply?buyer=existing"),
+        image: "/assets/home/home-take-payment.jpg",
+        alt: "Hand tapping a card on an unbranded reader",
+        painTitle: "The statement is the file",
+        pain: `<p>Bring the processing statement with the application. PaycoreOS reads it with the rest of the file. This page does not quote a processing rate.</p>`,
+        story: `<h2>Choose the business</h2>
         <div class="card-grid">
           ${["call-centers", "ecommerce", "retail", "restaurants"]
-            .map((value) => {
-              const label = categoryLabel(value);
-              return `<a class="card" href="${esc(apply(`/apply?vertical=${value}&buyer=existing`))}"><h3>${label}</h3><p>I already accept cards.</p></a>`;
-            })
+            .map((value) => `<a class="card" href="${esc(apply(`/apply?vertical=${value}&buyer=existing`))}"><h3>${categoryLabel(value)}</h3><p>I already accept cards.</p></a>`)
             .join("")}
-        </div>
-      </section>`;
+        </div>`,
+      });
     case "/declined":
-      return `${hero({
-        eyebrow: "PaycoreOS · a DBA of Telecom Elite, Inc. · Since 2013",
+      return offerPage(apply, {
         h1: "Declined by a big bank?",
-        lede: "PaycoreOS still submits the application. Most underwriting decisions within 24–72 business hours. That is not a promise of approval.",
-        support: "Choose the business below. The application then asks whether a bank declined you, which bank, and for an optional copy of the notice.",
-        primary: "Choose a business",
-        primaryHref: "#business",
-      })}
-      <section class="wrap" id="business">
-        <h2>Choose the business</h2>
+        sub: "PaycoreOS still submits the application. Most underwriting decisions within 24–72 business hours. That is not a promise of approval.",
+        applyHref: apply("/apply?declined=1"),
+        image: "/assets/home/home-declined.jpg",
+        alt: "Shop owner holding a plain envelope",
+        painTitle: "The bank said no",
+        pain: `<p>A decline from a big bank does not close the PaycoreOS application. You still choose the business. The form asks which bank, and you may upload the notice. The notice is optional. That is not a promise of approval.</p>`,
+        story: `<h2 id="business">Choose the business</h2>
         <p>The application is still for a call center, an online store, retail, a restaurant, or dispute defense.</p>
         <div class="card-grid">
           <a class="card" href="${esc(apply("/apply?vertical=call-centers&declined=1"))}"><h3>Call center</h3><p>Card-not-present processing.</p></a>
@@ -172,46 +182,40 @@ export function marketingMain(path: string, url: URL, contactReceived: boolean):
           <a class="card" href="${esc(apply("/apply?vertical=retail&declined=1"))}"><h3>Retail</h3><p>In-person processing and POS.</p></a>
           <a class="card" href="${esc(apply("/apply?vertical=restaurants&declined=1"))}"><h3>Restaurant</h3><p>Restaurant processing and handheld checkout.</p></a>
           <a class="card" href="${esc(apply("/apply?category=dispute-defense&declined=1"))}"><h3>Dispute defense</h3><p>For a business that already accepts cards. This does not open a processing account.</p></a>
-        </div>
-      </section>`;
+        </div>`,
+      });
     case "/startups":
-      return `${hero({
-        eyebrow: "PaycoreOS · a DBA of Telecom Elite, Inc. · Since 2013",
+      return offerPage(apply, {
         h1: "First merchant account for a new business",
-        lede: "Call centers, online stores, retailers, and restaurants. A legal business, a business bank account, and an owner ID are required. The fee is not an approval.",
-        support: "Most underwriting decisions within 24–72 business hours. The $39 fee is for review and submission. It is not collected until the fee account is ready.",
-        primary: "Apply",
-        primaryHref: apply("/apply?buyer=first"),
-        secondary: "Services",
-        secondaryHref: "/services",
-      })}
-      <section class="wrap">
-        <h2>Before you start</h2>
+        sub: "For a call center, online store, retailer, or restaurant that has not taken cards yet.",
+        applyHref: apply("/apply?buyer=first"),
+        image: "/assets/home/home-pos.jpg",
+        alt: "Unbranded counter terminal and handheld reader",
+        painTitle: "No processing statements yet",
+        pain: `<p>A first account still needs a legal entity, a business bank account, and an owner ID. You do not need card statements if you have never accepted cards. The fee is not an approval.</p>`,
+        story: `<h2>Before you start</h2>
         <ul class="plain">
           <li>A legal entity.</li>
           <li>A business bank account.</li>
           <li>An owner ID.</li>
         </ul>
-        <p>You do not need processing statements if you have never accepted cards. Bank statements, formation papers, a photo ID, and a voided check or bank letter are on the form.</p>
+        <p>Bank statements, formation papers, a photo ID, and a voided check or bank letter are on the form.</p>
         <div class="card-grid">
           ${["call-centers", "ecommerce", "retail", "restaurants"]
             .map((value) => `<a class="card" href="${esc(apply(`/apply?vertical=${value}&buyer=first`))}"><h3>${categoryLabel(value)}</h3><p>This is my first merchant account.</p></a>`)
             .join("")}
-        </div>
-      </section>`;
+        </div>`,
+      });
     case "/dispute-defense":
-      return `${hero({
-        eyebrow: "PaycoreOS · a DBA of Telecom Elite, Inc. · Since 2013",
+      return offerPage(apply, {
         h1: "Dispute defense for businesses that already accept cards",
-        lede: "Visa and Mastercard dispute tools for the processor you already have. This application does not open a new processing account. We do not tell you which company we use to enroll the tools.",
-        support: "The $39 fee is for review and submission. It is not a monthly defense price, and it is not collected until the fee account is ready.",
-        primary: "Apply",
-        primaryHref: apply("/apply?category=dispute-defense"),
-        secondary: "Services",
-        secondaryHref: "/services",
-      })}
-      <section class="wrap">
-        <h2>What the form asks</h2>
+        sub: "For a business that already accepts cards and wants Visa and Mastercard dispute tools. This does not open a new processing account.",
+        applyHref: apply("/apply?category=dispute-defense"),
+        image: "/assets/home/home-dispute.jpg",
+        alt: "Business owner reviewing dispute paperwork",
+        painTitle: "The chargeback on cards you already take",
+        pain: `<p>This file is for dispute tools on the account you already have. It asks for the MID and the CAID. It does not open a processing account, and it does not tell you which company enrolls the tools.</p>`,
+        story: `<h2>What the form asks</h2>
         <ul class="plain">
           <li>Legal business name, contact, phone, email, and business address.</li>
           <li>Confirmation that you already accept cards.</li>
@@ -223,8 +227,9 @@ export function marketingMain(path: string, url: URL, contactReceived: boolean):
         </ul>
         <h2>Tools</h2>
         ${TOOLS}
-        <p>If the business is also a call center, the form requires agreements, scripts, and articles of incorporation or organization. A processing application is not on this form. After you enroll, the merchant portal can offer one. You do not have to take it.</p>
-      </section>`;
+        <p>If the business is also a call center, the form requires agreements, scripts, and articles of incorporation or organization. A processing application is not on this form. After you enroll, the merchant portal can offer one. You do not have to take it.</p>`,
+        boarding: false,
+      });
     case "/services":
       return `<header class="hero">
         <p class="eyebrow">PaycoreOS · a DBA of Telecom Elite, Inc.</p>
