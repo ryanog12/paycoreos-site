@@ -191,8 +191,8 @@ export async function submitApply(c: AppContext): Promise<Response> {
     `INSERT INTO applications (
       id, public_ref, category, buyer_type, status_id, email, contact_name, legal_business_name, answers_json, parent_application_id,
       utm_source, utm_medium, utm_campaign, utm_content, utm_term, gclid, gbraid, wbraid, fbclid, li_fat_id,
-      landing_path, first_vertical, first_buyer_type, declined_by_bank, declined_bank, fee_status, fee_amount_cents, merchant_user_id, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'not_collected', ?, ?, ?, ?)`,
+      landing_path, first_vertical, first_buyer_type, declined_by_bank, declined_bank, callback_requested, fee_status, fee_amount_cents, merchant_user_id, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'not_collected', ?, ?, ?, ?)`,
   )
     .bind(
       appId,
@@ -233,7 +233,7 @@ export async function submitApply(c: AppContext): Promise<Response> {
       .bind(row.id, appId, row.key, row.filename, row.r2, row.type, row.size, stamp)
       .run();
   }
-  const body = `Application received. The $39 fee is not collected until the fee account is ready. Submitting the form does not pay the fee.`;
+  const body = `Application received. PaycoreOS will call to go over the file. The $39 fee is not collected until the fee account is ready. Submitting the form does not pay the fee.`;
   await c.env.DB.prepare(
     "INSERT INTO timeline_events (id, application_id, status_id, body, merchant_visible, email_queued, created_by, created_at) VALUES (?, ?, ?, ?, 1, 1, ?, ?)",
   )
@@ -275,6 +275,7 @@ export async function renderFee(c: AppContext): Promise<Response> {
   const main = `<article class="wrap prose">
     <h1>Application saved</h1>
     <p>We have the ${esc(categoryLabel(app.category).toLowerCase())} application <strong>${esc(app.public_ref)}</strong>. ${app.buyer_type ? esc(buyerLabel(app.buyer_type)) + "." : ""} Status: ${esc(app.status_label || "Application received")}.</p>
+    <p>PaycoreOS will call to go over the file.</p>
     ${feeBox()}
     <p><button type="button" class="btn-p" disabled aria-disabled="true">Pay $39</button></p>
     <p>The pay button stays off until the fee account is ready. The fee is not collected until then. We do not take a card number on this page. There is no charge.</p>

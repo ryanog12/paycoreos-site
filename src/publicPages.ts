@@ -27,6 +27,31 @@ const TOOLS = `<ul class="plain">
   <li>Ethoca Consumer Clarity</li>
 </ul>`;
 
+export const CALL_SELLS = [
+  ["call-center", "Call center"],
+  ["online-store", "Online store"],
+  ["retail", "Retail"],
+  ["restaurant", "Restaurant"],
+  ["dispute-defense", "Dispute defense"],
+] as const;
+
+export const CALL_CARD = [
+  ["already", "Already take cards"],
+  ["declined", "A bank declined them"],
+] as const;
+
+export const CALL_VOLUME = [
+  ["under-10k", "Under $10,000"],
+  ["10k-50k", "$10,000 to $50,000"],
+  ["50k-250k", "$50,000 to $250,000"],
+  ["over-250k", "Over $250,000"],
+  ["not-sure", "Not sure yet"],
+] as const;
+
+export function callChoice(list: readonly (readonly [string, string])[], value: string): string | null {
+  return list.find(([key]) => key === value)?.[1] ?? null;
+}
+
 export function marketingMain(path: string, url: URL, contactReceived: boolean): string | null {
   const apply = (href: string) => withQuery(href, url);
   switch (path) {
@@ -238,25 +263,7 @@ export function marketingMain(path: string, url: URL, contactReceived: boolean):
         <p><a class="btn-p" href="${esc(apply("/apply"))}">Apply</a></p>
       </article>`;
     case "/contact":
-      return `<article class="wrap">
-        <header class="page-head"><h1>Contact PaycoreOS</h1>
-        <p class="lede">Call, email, or send a note. The inbox at ${EMAIL} is the address to use. If email is quiet, call.</p></header>
-        <div class="split">
-          <div>
-            <p><span class="k">Phone</span><br><a href="tel:${PHONE_TEL}">${PHONE_DISPLAY}</a></p>
-            <p><span class="k">Email</span><br><a href="mailto:${EMAIL}">${EMAIL}</a></p>
-            <p><span class="k">Address</span><br>PaycoreOS, a DBA of Telecom Elite, Inc.<br>${ADDRESS}</p>
-          </div>
-          <form class="stack-form" method="post" action="/contact">
-            ${contactReceived ? '<p class="ok" role="status">We saved your message. Email from this site is not being sent yet. If you need an answer now, call (407) 270-2502.</p>' : ""}
-            <label>Name<input name="name" required autocomplete="name"></label>
-            <label>Email<input name="email" type="email" required autocomplete="email"></label>
-            <label>Phone<input name="phone" type="tel" autocomplete="tel"></label>
-            <label>Message<textarea name="message" required></textarea></label>
-            <button class="btn-p" type="submit">Send message</button>
-          </form>
-        </div>
-      </article>`;
+      return contactMain(url, { received: contactReceived });
     case "/application-fee":
       return `<article class="wrap prose">
         <h1>The $39 application fee</h1>
@@ -309,6 +316,7 @@ function homePage(apply: (href: string) => string): string {
       <div class="home-cta">
         <a class="btn-p" href="${esc(apply("/apply"))}">Apply</a>
         <p class="home-fee">The application fee is $39.</p>
+        <p class="home-call"><a href="${esc(apply("/contact"))}#book">Want a read on the file first?</a></p>
       </div>
     </div>
     <figure class="home-hero-figure">
@@ -337,6 +345,72 @@ function homePage(apply: (href: string) => string): string {
       ${productBlock("/assets/home/home-gateways.jpg", "Person shopping on a laptop beside a bag", "Authorize.Net and NMI", apply("/services"), "PaycoreOS resells the Authorize.Net gateway and the NMI gateway for checkout and hosted payments.")}
     </div>
   </section>`;
+}
+
+function options(list: readonly (readonly [string, string])[], selected: string): string {
+  return list
+    .map(([key, label]) => `<option value="${esc(key)}"${key === selected ? " selected" : ""}>${esc(label)}</option>`)
+    .join("");
+}
+
+export function contactMain(
+  url: URL,
+  state: { received?: boolean; booked?: boolean; errors?: string[]; values?: Record<string, string> },
+): string {
+  const values = state.values || {};
+  const errors = state.errors?.length
+    ? `<div class="errors" role="alert"><p>Fix the form before the call can be saved.</p><ul>${state.errors.map((item) => `<li>${esc(item)}</li>`).join("")}</ul></div>`
+    : "";
+  const booked = url.searchParams.get("booked") === "1" || state.booked;
+  return `<article class="wrap">
+    <header class="page-head"><h1>Contact PaycoreOS</h1>
+    <p class="lede">Call, email, or send a note. The inbox at ${EMAIL} is the address to use. If email is quiet, call.</p></header>
+    <section id="book" class="call-form">
+      <h2>Want a read on the file first?</h2>
+      <p>Send this form. There is no calendar on this page.</p>
+      ${booked ? '<p class="ok" role="status">PaycoreOS will call. The call is about 20 minutes. There is no booking link yet.</p>' : ""}
+      ${errors}
+      <form class="stack-form" method="post" action="/contact/call">
+        <label>Name<input name="name" required autocomplete="name" value="${esc(values.name || "")}"></label>
+        <label>Phone<input name="phone" type="tel" required autocomplete="tel" value="${esc(values.phone || "")}"></label>
+        <label>Email<input name="email" type="email" required autocomplete="email" value="${esc(values.email || "")}"></label>
+        <label>What do you sell?
+          <select name="sells" required>
+            <option value="">Choose</option>
+            ${options(CALL_SELLS, values.sells || "")}
+          </select>
+        </label>
+        <label>Already taking cards, or did a bank decline the file?
+          <select name="card_status" required>
+            <option value="">Choose</option>
+            ${options(CALL_CARD, values.card_status || "")}
+          </select>
+        </label>
+        <label>Rough monthly card volume
+          <select name="monthly_volume" required>
+            <option value="">Choose</option>
+            ${options(CALL_VOLUME, values.monthly_volume || "")}
+          </select>
+        </label>
+        <button class="btn-p" type="submit">Request a call</button>
+      </form>
+    </section>
+    <div class="split">
+      <div>
+        <p><span class="k">Phone</span><br><a href="tel:${PHONE_TEL}">${PHONE_DISPLAY}</a></p>
+        <p><span class="k">Email</span><br><a href="mailto:${EMAIL}">${EMAIL}</a></p>
+        <p><span class="k">Address</span><br>PaycoreOS, a DBA of Telecom Elite, Inc.<br>${ADDRESS}</p>
+      </div>
+      <form class="stack-form" method="post" action="/contact">
+        ${state.received ? '<p class="ok" role="status">We saved your message. Email from this site is not being sent yet. If you need an answer now, call (407) 270-2502.</p>' : ""}
+        <label>Name<input name="name" required autocomplete="name"></label>
+        <label>Email<input name="email" type="email" required autocomplete="email"></label>
+        <label>Phone<input name="phone" type="tel" autocomplete="tel"></label>
+        <label>Message<textarea name="message" required></textarea></label>
+        <button class="btn-s" type="submit">Send message</button>
+      </form>
+    </div>
+  </article>`;
 }
 
 export function seoOrThrow(path: string): PageSeo {

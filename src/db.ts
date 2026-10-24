@@ -97,6 +97,7 @@ CREATE TABLE IF NOT EXISTS applications (
   first_buyer_type TEXT,
   declined_by_bank INTEGER NOT NULL DEFAULT 0,
   declined_bank TEXT NOT NULL DEFAULT '',
+  callback_requested INTEGER NOT NULL DEFAULT 0,
   fee_status TEXT NOT NULL DEFAULT 'not_collected',
   fee_amount_cents INTEGER NOT NULL DEFAULT 3900,
   merchant_user_id TEXT,
@@ -166,6 +167,16 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   email TEXT NOT NULL,
   phone TEXT,
   message TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS call_requests (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  email TEXT NOT NULL,
+  sells TEXT NOT NULL,
+  card_status TEXT NOT NULL,
+  monthly_volume TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS app_meta (
@@ -263,6 +274,9 @@ async function ensureApplicationColumns(env: Env): Promise<void> {
   }
   if (!names.has("declined_bank")) {
     await env.DB.prepare("ALTER TABLE applications ADD COLUMN declined_bank TEXT NOT NULL DEFAULT ''").run();
+  }
+  if (!names.has("callback_requested")) {
+    await env.DB.prepare("ALTER TABLE applications ADD COLUMN callback_requested INTEGER NOT NULL DEFAULT 0").run();
   }
 }
 

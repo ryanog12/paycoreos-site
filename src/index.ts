@@ -7,7 +7,7 @@ import { boot } from "./db";
 import { layout, simplePage } from "./layout";
 import { privacyHtml, termsHtml } from "./legal";
 import * as portal from "./portal";
-import { marketingMain, seoOrThrow } from "./publicPages";
+import { CALL_CARD, CALL_SELLS, CALL_VOLUME, callChoice, contactMain, marketingMain, seoOrThrow } from "./publicPages";
 import { llmsTxt, pageSeo, robotsTxt, sitemapXml } from "./seo";
 import type { Env, SessionUser } from "./types";
 import { cleanText, EMAIL, newId, nowIso } from "./util";
@@ -113,6 +113,45 @@ app.post("/contact", async (c) => {
     applicationId: null,
   });
   return c.redirect("/contact?received=1");
+});
+
+app.post("/contact/call", async (c) => {
+  const form = await c.req.formData();
+  const values = {
+    name: cleanText(String(form.get("name") || ""), 200),
+    phone: cleanText(String(form.get("phone") || ""), 40),
+    email: cleanText(String(form.get("email") || ""), 200),
+    sells: String(form.get("sells") || ""),
+    card_status: String(form.get("card_status") || ""),
+    monthly_volume: String(form.get("monthly_volume") || ""),
+  };
+  const sells = callChoice(CALL_SELLS, values.sells);
+  const cardStatus = callChoice(CALL_CARD, values.card_status);
+  const volume = callChoice(CALL_VOLUME, values.monthly_volume);
+  const errors: string[] = [];
+  if (!values.name) errors.push("Name is required.");
+  if (values.phone.replace(/\D/g, "").length < 7) errors.push("Phone is required.");
+  if (!values.email.includes("@") || !values.email.includes(".")) errors.push("Email is required.");
+  if (!sells) errors.push("Choose what you sell.");
+  if (!cardStatus) errors.push("Say whether you already take cards or a bank declined the file.");
+  if (!volume) errors.push("Choose a rough monthly card volume.");
+  const url = new URL(c.req.url);
+  if (errors.length) {
+    return c.html(layout({ hostname: url.hostname, seo: pageSeo("/contact")!, main: contactMain(url, { errors, values }) }), 400);
+  }
+  const stamp = nowIso();
+  await c.env.DB.prepare(
+    "INSERT INTO call_requests (id, name, phone, email, sells, card_status, monthly_volume, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+  )
+    .bind(newId("call"), values.name, values.phone, values.email, sells, cardStatus, volume, stamp)
+    .run();
+  await queueEmail(c.env.DB, {
+    to: EMAIL,
+    subject: `PaycoreOS call request from ${values.name}`,
+    body: `${values.name}\n${values.phone}\n${values.email}\n${sells}\n${cardStatus}\n${volume}\n\nThis is a call request. It is not a fee payment.`,
+    applicationId: null,
+  });
+  return c.redirect("/contact?booked=1#book");
 });
 
 app.get("/apply", (c) => renderApply(c));

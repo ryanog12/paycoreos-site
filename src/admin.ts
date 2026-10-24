@@ -42,7 +42,7 @@ export async function login(c: Ctx): Promise<Response> {
 
 export async function applications(c: Ctx): Promise<Response> {
   const rows = await c.env.DB.prepare(
-    `SELECT a.public_ref, a.category, a.legal_business_name, a.email, a.created_at, a.fee_status, a.declined_by_bank, s.label AS status_label, p.name AS processor_name
+    `SELECT a.public_ref, a.category, a.legal_business_name, a.email, a.created_at, a.fee_status, a.declined_by_bank, a.callback_requested, s.label AS status_label, p.name AS processor_name
      FROM applications a
      LEFT JOIN statuses s ON s.id = a.status_id
      LEFT JOIN processors p ON p.id = a.processor_id
@@ -57,13 +57,14 @@ export async function applications(c: Ctx): Promise<Response> {
         <td>${esc(row.status_label || "")}</td>
         <td>${esc(row.processor_name || "Unassigned")}</td>
         <td>${Number(row.declined_by_bank) === 1 ? "Yes" : "No"}</td>
+        <td>${Number(row.callback_requested) === 1 ? "Yes" : "No"}</td>
         <td>${esc(row.fee_status)}</td>
         <td>${esc(formatWhen(row.created_at))}</td>
       </tr>`,
     )
     .join("");
   const body = `<h1>Applications</h1>
-    <table><thead><tr><th>Ref</th><th>Business</th><th>Category</th><th>Status</th><th>Processor</th><th>Bank decline</th><th>Fee</th><th>Created</th></tr></thead><tbody>${list || `<tr><td colspan="8">No applications yet.</td></tr>`}</tbody></table>`;
+    <table><thead><tr><th>Ref</th><th>Business</th><th>Category</th><th>Status</th><th>Processor</th><th>Bank decline</th><th>Callback</th><th>Fee</th><th>Created</th></tr></thead><tbody>${list || `<tr><td colspan="9">No applications yet.</td></tr>`}</tbody></table>`;
   return c.html(shell(c, "Applications", "/admin", body));
 }
 
@@ -99,6 +100,7 @@ export async function applicationDetail(c: Ctx, ref: string, notice = ""): Promi
     <p>${esc(app.email || "")} · ${esc(categoryLabel(String(app.category)))} · ${esc(app.buyer_type || "dispute defense")} · Fee ${esc(app.fee_status || "")}</p>
     <p>Processor on this file: <strong>${esc(app.processor_name || "Unassigned")}</strong>. Merchants do not see this.</p>
     <p>Declined by a bank: <strong>${Number(app.declined_by_bank) === 1 ? "Yes" : "No"}</strong>${app.declined_bank ? ` · ${esc(app.declined_bank)}` : ""}. The merchant is not shown a processor for that answer.</p>
+    <p>Callback: <strong>${Number(app.callback_requested) === 1 ? "Yes" : "No"}</strong>. PaycoreOS will call to go over the file.</p>
     <h2>Record a push</h2>
     <p class="help">This stores the processor and the push target. It does not call a processor API.</p>
     <form class="stack-form" method="post" action="/admin/applications/${esc(ref)}/push">
@@ -548,8 +550,21 @@ function ticketTypeForm(action: string, row: Record<string, string | number> | n
 }
 
 export async function messages(c: Ctx): Promise<Response> {
+  const calls = await c.env.DB.prepare(
+    "SELECT name, phone, email, sells, card_status, monthly_volume, created_at FROM call_requests ORDER BY created_at DESC LIMIT 100",
+  ).all<Record<string, string>>();
   const rows = await c.env.DB.prepare("SELECT name, email, phone, message, created_at FROM contact_messages ORDER BY created_at DESC LIMIT 100").all<Record<string, string>>();
-  const body = `<h1>Contact messages</h1><ul class="plain-list">${(rows.results || []).map((r) => `<li><strong>${esc(r.name)}</strong> · ${esc(r.email)} · ${esc(r.phone || "")}<br>${esc(r.message)}<br><span>${esc(formatWhen(r.created_at))}</span></li>`).join("") || "<li>No messages.</li>"}</ul>`;
+  const callList = (calls.results || [])
+    .map(
+      (r) => `<li><strong>${esc(r.name)}</strong> · ${esc(r.phone)} · ${esc(r.email)}<br>${esc(r.sells)} · ${esc(r.card_status)} · ${esc(r.monthly_volume)}<br><span>${esc(formatWhen(r.created_at))}</span></li>`,
+    )
+    .join("");
+  const body = `<h1>Messages</h1>
+    <h2>Call requests</h2>
+    <p class="help">A call request is not a fee payment. Ads still use the fee payment as the only bidding conversion.</p>
+    <ul class="plain-list">${callList || "<li>No call requests.</li>"}</ul>
+    <h2>Contact messages</h2>
+    <ul class="plain-list">${(rows.results || []).map((r) => `<li><strong>${esc(r.name)}</strong> · ${esc(r.email)} · ${esc(r.phone || "")}<br>${esc(r.message)}<br><span>${esc(formatWhen(r.created_at))}</span></li>`).join("") || "<li>No messages.</li>"}</ul>`;
   return c.html(shell(c, "Messages", "/admin/messages", body));
 }
 

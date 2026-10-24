@@ -70,6 +70,8 @@ if (!html["/"].includes('href="/declined"') && !html["/"].includes("href=\"/decl
 if (!html["/"].includes("Merchant processing")) fail("home missing eyebrow");
 if (!html["/"].includes("/assets/home/home-hero.jpg")) fail("home missing hero graphic");
 if ((html["/"].match(/class="btn-p"/g) || []).length !== 1) fail("home should have one primary Apply button");
+if (!html["/"].includes(">Want a read on the file first?</a>")) fail("home missing call link");
+if (!html["/"].includes('href="/contact#book"') && !html["/"].includes("#book")) fail("home call link missing #book");
 const homeFooter = html["/"].match(/<footer class="site-footer">[\s\S]*?<\/footer>/)?.[0] || "";
 if (/1809 E Broadway|\(407\) 270-2502|info@paycoreos.com|which company receives/i.test(homeFooter)) fail("homepage footer shows contact identity");
 const homeVisible = html["/"].replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/g, "");
@@ -153,6 +155,7 @@ if (submitted.status !== 303) {
   if (!feeHtml.includes("disabled") || !/Pay \$39/.test(feeHtml)) fail("pay button missing");
   if (feeHtml.includes("fee_paid")) fail("fee page contains fee_paid");
   if (!feeHtml.includes("application_submitted")) fail("submitted event missing");
+  if (!feeHtml.includes("PaycoreOS will call to go over the file.")) fail("confirmation missing callback");
   if (banned.test(feeHtml)) fail("fee page names a supplier");
   const portal = await fetch(base + "/portal", { headers: { cookie: session.split(";")[0] } });
   const portalHtml = await portal.text();
@@ -176,6 +179,7 @@ if (submitted.status !== 303) {
     const cookieHeader = adminCookie.split(";")[0];
     const detail = await fetch(base + "/admin/applications/" + ref, { headers: { cookie: cookieHeader } });
     const detailHtml = await detail.text();
+    if (!detailHtml.includes("Callback:") || !detailHtml.includes("PaycoreOS will call to go over the file.")) fail("admin missing callback flag");
     if (!detailHtml.includes("Disputifier")) fail("admin cannot see Disputifier");
     const id = detailHtml.match(/name="processor_id"[\s\S]*?<option value="(proc_disputifier)"/)?.[1]
       || detailHtml.match(/value="(proc_disputifier)"/)?.[1];
@@ -266,6 +270,23 @@ const sent = await fetch(base + "/contact", { method: "POST", body: contact, red
 if (sent.status < 300 || sent.status > 399) fail(`contact ${sent.status}`);
 const received = await (await fetch(base + "/contact?received=1")).text();
 if (!received.includes("We saved your message")) fail("contact confirmation missing");
+if (!html["/contact"].includes('id="book"')) fail("contact missing call form");
+if (!html["/contact"].includes("Already take cards") || !html["/contact"].includes("A bank declined them")) fail("contact call form missing card status");
+if (!html["/contact"].includes("Rough monthly card volume")) fail("contact call form missing volume");
+if (/<iframe|calendly|calendar\.google/i.test(html["/contact"])) fail("contact embeds a calendar");
+const call = new FormData();
+call.set("name", "Casey Caller");
+call.set("phone", "407-555-0166");
+call.set("email", "casey@example.com");
+call.set("sells", "retail");
+call.set("card_status", "declined");
+call.set("monthly_volume", "10k-50k");
+const called = await fetch(base + "/contact/call", { method: "POST", body: call, redirect: "manual" });
+if (called.status < 300 || called.status > 399) fail(`call request ${called.status}`);
+const booked = await (await fetch(base + "/contact?booked=1")).text();
+if (!booked.includes("PaycoreOS will call. The call is about 20 minutes. There is no booking link yet.")) fail("call confirmation missing");
+if (booked.includes("fee_paid") || booked.includes('data-paycore-also="fee_paid"')) fail("call request fired fee_paid");
+if (/<iframe|calendly/i.test(booked)) fail("call confirmation embeds a calendar");
 
 const declinedForm = new FormData();
 declinedForm.set("category", "dispute-defense");
@@ -313,6 +334,12 @@ if (declinedSubmit.status !== 303) {
   if (!detailHtml.includes("Declined by a bank:") || !detailHtml.includes(">Yes<") || !detailHtml.includes("Example National Bank")) {
     fail("admin missing declined-by-bank flag");
   }
+  if (!detailHtml.includes("Callback:")) fail("declined application missing callback flag");
+  const messages = await (await fetch(base + "/admin/messages", { headers: { cookie: adminCookie.split(";")[0] } })).text();
+  if (!messages.includes("Casey Caller") || !messages.includes("A bank declined them") || !messages.includes("$10,000 to $50,000")) {
+    fail("admin missing call request");
+  }
+  if (messages.includes("fee_paid")) fail("call request stored as fee_paid");
   ok("declined application " + ref);
 }
 
