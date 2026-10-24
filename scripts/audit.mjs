@@ -274,6 +274,7 @@ if (!html["/contact"].includes('id="book"')) fail("contact missing call form");
 if (!html["/contact"].includes("Already take cards") || !html["/contact"].includes("A bank declined them")) fail("contact call form missing card status");
 if (!html["/contact"].includes("Rough monthly card volume")) fail("contact call form missing volume");
 if (/<iframe|calendly|calendar\.google/i.test(html["/contact"])) fail("contact embeds a calendar");
+if (/no calendar|booking link/i.test(html["/contact"])) fail("contact mentions a missing calendar");
 const call = new FormData();
 call.set("name", "Casey Caller");
 call.set("phone", "407-555-0166");
@@ -284,7 +285,8 @@ call.set("monthly_volume", "10k-50k");
 const called = await fetch(base + "/contact/call", { method: "POST", body: call, redirect: "manual" });
 if (called.status < 300 || called.status > 399) fail(`call request ${called.status}`);
 const booked = await (await fetch(base + "/contact?booked=1")).text();
-if (!booked.includes("PaycoreOS will call. The call is about 20 minutes. There is no booking link yet.")) fail("call confirmation missing");
+if (!booked.includes("PaycoreOS will call. The call is about 20 minutes.")) fail("call confirmation missing");
+if (/no calendar|booking link/i.test(booked)) fail("call page mentions a missing calendar");
 if (booked.includes("fee_paid") || booked.includes('data-paycore-also="fee_paid"')) fail("call request fired fee_paid");
 if (/<iframe|calendly/i.test(booked)) fail("call confirmation embeds a calendar");
 

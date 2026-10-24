@@ -367,8 +367,7 @@ export function contactMain(
     <p class="lede">Call, email, or send a note. The inbox at ${EMAIL} is the address to use. If email is quiet, call.</p></header>
     <section id="book" class="call-form">
       <h2>Want a read on the file first?</h2>
-      <p>Send this form. There is no calendar on this page.</p>
-      ${booked ? '<p class="ok" role="status">PaycoreOS will call. The call is about 20 minutes. There is no booking link yet.</p>' : ""}
+      <p${booked ? ' class="ok" role="status"' : ""}>PaycoreOS will call. The call is about 20 minutes.</p>
       ${errors}
       <form class="stack-form" method="post" action="/contact/call">
         <label>Name<input name="name" required autocomplete="name" value="${esc(values.name || "")}"></label>
